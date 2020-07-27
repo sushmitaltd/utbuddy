@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import testFilePathGenerator from './file_path_generator';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -12,6 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const command = 'boilerPlateForTS.create_unit_test_boiler_plate';
 	function commandHandler(filepath:string): void {
 		vscode.window.showInformationMessage(`Hii Boiler plate extension has been added${filepath}`);
+		testFilePathGenerator(filepath);
 	};
 
 	// The command has been defined in the package.json file
