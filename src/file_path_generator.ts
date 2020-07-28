@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-
+interface ExportedModules {type:string,name:string,code:string};
 
 function createAndWriteToFile(newTestFilePath:string, filePath: string, importPath:string): void{
     let data: string;
@@ -17,12 +17,98 @@ function createAndWriteToFile(newTestFilePath:string, filePath: string, importPa
             for (const match of results){
                 logger.write(match[0]+'\n');
             }
-            // import the file to be tested            
-            logger.write(`import * from \'${importPath.replace('//',`/`)}\' \n`);
+            
+            const exports:ExportedModules[] = getExportsFromCurrentFile(data);
+            // import the file to be tested 
+            let imp:any = '*';
+            if(exports.length > 1){
+                imp = '{';
+                exports.forEach(element => {
+                    imp += element.name + ',';
+                });
+                imp += '}';
+            } else if (exports.length ===1){
+                imp = exports[0].name;
+            }          
+            logger.write(`import ${imp} from \'${importPath.replace('//',`/`)}\' ;\n\n`);
+            writeDescribeStructure(exports,logger);
         };
       });
 }
-
+function writeDescribeStructure(exports:ExportedModules[],logger){    
+    logger.write('describe(\'Testing replace file name\', () => {\n');
+    exports.forEach(element => {
+        if(element.type === 'function'){
+            logger.write(`describe(\'${element.name}\', () => { \n});\n`);
+        }
+    });
+    logger.write('});')
+}
+function getExportsFromCurrentFile(fileContent:string): ExportedModules[]{
+    const exports:ExportedModules[] = [];
+    // everything that starts with export and ends with { or =;
+    // keep a key:valuetype, value
+    // where key is the export
+    // value type is const, function
+    // value is data
+    const reg: RegExp = /export?.*{|export?.*=/g;
+    let results =  fileContent.matchAll(reg);
+    // keep a key:valuetype, value
+    // where key is the export
+    // value type is const, function
+    // value is data
+    for (const match of results){
+        // will be dealing with export const, export default function, export function
+        // fixme: add for interfaces
+        const content = fileContent.substring(match.index);
+        if (content.startsWith('export const')){
+            // no ut's for const, adding for imports            
+            const name = content.substring('export const'.length);
+            const nameArray = name.trim().split('=');
+            exports.push({code:match,type:'const',name:nameArray[0]});
+        }else if(content.startsWith('export default function')){
+            const name = content.substring('export default function'.length);
+            const nameArray = name.trim().split('(');
+            //FIXME: better way to parse 
+            // explore tostring
+            // second occurence of export
+            const a = getPosition(content,'export ');
+            // second occurence of function
+            const b = getPosition(content,'function ');            
+            let functionCode;
+            if (a >= content.length && b >= content.length){
+                 functionCode = content;
+            } else if( a < b){
+                functionCode = content.substring(0,a);
+            }else{
+                functionCode = content.substring(0,b);
+            }
+            exports.push({code:functionCode,type:'function',name:nameArray[0]});
+        } else if(content.startsWith('export function')){
+            const name = content.substring('export function'.length);
+            const nameArray = name.trim().split('(');
+            //FIXME: better way to parse 
+            // explore tostring
+            // second occurence of export
+            const a = getPosition(content,'export ');
+            // second occurence of function
+            const b = getPosition(content,'function ');            
+            let functionCode;
+            if (a >= content.length && b >= content.length){
+                 functionCode = content;
+            } else if( a < b){
+                functionCode = content.substring(0,a);
+            }else{
+                functionCode = content.substring(0,b);
+            }
+            exports.push({code:functionCode,type:'function',name:nameArray[0]});
+        }
+    }
+    return exports;
+}
+function getPosition(str:string, subString:string, index = 2) {
+    return str.split(subString, index).join(subString).length;
+  }
 export default function testFilePathGenerator(filepath:string): void{
     const indexOfSrc= filepath.indexOf("\\src\\");
     const lastDirectoryIndex = filepath.lastIndexOf("\\");
