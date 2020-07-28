@@ -2,15 +2,24 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-function createAndWriteToFile(filePath:string): void{
-    fs.writeFile(filePath, "content of the file", (error)=>{
-        if (error){
-            console.error('Error occured', error);
-        }
+
+
+function createAndWriteToFile(newTestFilePath:string, filePath: string): void{
+    let data: string;
+    fs.readFile(filePath, "utf8",(err, data) => {
+        if (err) {console.error('Error occured', err);}
         else{
-            console.log('Created boiler plate');
-        }
-    });
+            var logger = fs.createWriteStream(newTestFilePath, {
+                flags: 'w' 
+              });
+              
+            const reg: RegExp = /import.*?;/g;
+            let results = data.matchAll(reg);
+            for (const match of results){
+                logger.write(match[0]+ '\n');
+            }
+        };
+      });
 }
 
 export default function testFilePathGenerator(filepath:string): void{
@@ -30,5 +39,5 @@ export default function testFilePathGenerator(filepath:string): void{
     if (!fs.existsSync(newDirectoryPath)){
         fs.mkdirSync(newDirectoryPath, { recursive: true });}
 
-    createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts');   
+    createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts', filepath);   
 }
