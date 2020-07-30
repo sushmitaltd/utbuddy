@@ -4,7 +4,7 @@ import * as path from 'path';
 
 interface ExportedModules {type:string,name:string,code:string};
 
-function createAndWriteToFile(newTestFilePath:string, filePath: string, importPath:string, fileName:string): void{
+function createAndWriteToFile(newTestFilePath:string, filePath: string, importPath:string, fileName:string, pathAfterSrc:string, countOfDots:number): void{
     let data: string;
     fs.readFile(filePath, "utf8",(err, data) => {
         if (err) {console.error('Error occured', err);}
@@ -15,7 +15,31 @@ function createAndWriteToFile(newTestFilePath:string, filePath: string, importPa
             const reg: RegExp = /import.*?;/g;
             let results = data.matchAll(reg);
             for (const match of results){
+                if(match[0].includes('\'.')){
+                    // const count = (match[0].match('../') || []).length;
+                    // reverse iterate to math pathaftersrc
+                    const curpath = match[0].split(' ');
+                    const srcpath = `src${pathAfterSrc}`.split('\\');
+                    const includePath = curpath[curpath.length - 1].replace('\'','').replace(';','').split('/');
+                    // FixMe: includes that are outside of source
+                    // .. indicates come out of folder
+                    // take src path as base and come out of number of folders based on ..
+                    let srcExcludePathCount = 0;
+                    let extraPath = '/';
+                    includePath.forEach(element => {
+                        if(element === '..'){
+                            srcExcludePathCount +=1;
+                        }else{
+                            extraPath += element + '/';
+                        }
+                    });
+                    extraPath = extraPath.substring(0,extraPath.length-1);
+                    const fullPath = srcpath.slice(0,srcpath.length-srcExcludePathCount).join('/') + extraPath;
+                    const dots = `../`.repeat(countOfDots);
+                    logger.write(curpath.slice(0,curpath.length-1).join(' ') + ' \'' + dots + fullPath + ';' + '\n');
+                }else{
                 logger.write(match[0]+'\n');
+                }
             }
             
             const exports:ExportedModules[] = getExportsFromCurrentFile(data);
@@ -117,7 +141,7 @@ export default function testFilePathGenerator(filepath:string): void{
     const countOfDots = pathAfterSrc.split('\\').length ;
     const dots = `../`.repeat(countOfDots);
     const importPath = `${dots}src/${pathAfterSrc}/${fileName}`;
-    createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts', filepath, importPath.replace('\\',`/`),fileName);   
+    createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts', filepath, importPath.replace('\\',`/`),fileName,pathAfterSrc, countOfDots);   
 }
 
 function getCode(data:string){
@@ -140,22 +164,3 @@ function getCode(data:string){
     return code;
 }
 
-function identifyTests(data:string):string[]{
-    let code = '';
-    let count = 0;
-    let flag = 0;
-    for (let i=0; i < data.length; i++){
-        if(data[i] === '{' ){
-            count+=1;
-            flag = 1;
-        }
-        if (data[i] === '}') {
-            count-=1;
-        }
-        code+=data[i];
-        if ((flag === 1) && (count === 0)){
-            break;
-        }
-    }
-    return code;
-}
