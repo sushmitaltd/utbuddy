@@ -64,7 +64,8 @@ function writeDescribeStructure(exports:ExportedModules[],logger,fileName:string
     logger.write(`describe(\'Testing ${fileName}\', () => {\n`);
     exports.forEach(element => {
         if(element.type === 'function'){
-            logger.write(`describe(\'${element.name}\', () => { \n});\n`);
+            const tab:any = `\t`;
+            logger.write(`${tab}describe(\'${element.name}\', () => {\n${tab}});\n`);
         }
     });
     logger.write('});');
