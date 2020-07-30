@@ -51,7 +51,7 @@ function getExportsFromCurrentFile(fileContent:string): ExportedModules[]{
     // where key is the export
     // value type is const, function
     // value is data
-    const reg: RegExp = /export?.*{|export?.*=/g;
+    const reg: RegExp = /export?.|\n*{|export?.|\n*=/g;
     let results =  fileContent.matchAll(reg);
     // keep a key:valuetype, value
     // where key is the export
@@ -74,6 +74,16 @@ function getExportsFromCurrentFile(fileContent:string): ExportedModules[]{
         } else if(content.startsWith('export function')){
             const functionCode = getCode(content);
             const name = content.substring('export function'.length);
+            const nameArray = name.trim().split('(');
+            exports.push({code:functionCode,type:'function',name:nameArray[0]});
+        }else if(content.startsWith('export default async function')){
+            const functionCode = getCode(content);
+            const name = content.substring('export default async function'.length);
+            const nameArray = name.trim().split('(');
+            exports.push({code:functionCode,type:'function',name:nameArray[0]});
+        } else if(content.startsWith('export async function')){
+            const functionCode = getCode(content);
+            const name = content.substring('export async function'.length);
             const nameArray = name.trim().split('(');
             exports.push({code:functionCode,type:'function',name:nameArray[0]});
         }
