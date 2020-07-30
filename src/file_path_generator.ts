@@ -42,7 +42,7 @@ function writeDescribeStructure(exports:ExportedModules[],logger){
             logger.write(`describe(\'${element.name}\', () => { \n});\n`);
         }
     });
-    logger.write('});')
+    logger.write('});');
 }
 function getExportsFromCurrentFile(fileContent:string): ExportedModules[]{
     const exports:ExportedModules[] = [];
@@ -67,40 +67,14 @@ function getExportsFromCurrentFile(fileContent:string): ExportedModules[]{
             const nameArray = name.trim().split('=');
             exports.push({code:match,type:'const',name:nameArray[0]});
         }else if(content.startsWith('export default function')){
+            const functionCode = getCode(content);
             const name = content.substring('export default function'.length);
             const nameArray = name.trim().split('(');
-            //FIXME: better way to parse 
-            // explore tostring
-            // second occurence of export
-            const a = getPosition(content,'export ');
-            // second occurence of function
-            const b = getPosition(content,'function ');            
-            let functionCode;
-            if (a >= content.length && b >= content.length){
-                 functionCode = content;
-            } else if( a < b){
-                functionCode = content.substring(0,a);
-            }else{
-                functionCode = content.substring(0,b);
-            }
             exports.push({code:functionCode,type:'function',name:nameArray[0]});
         } else if(content.startsWith('export function')){
+            const functionCode = getCode(content);
             const name = content.substring('export function'.length);
             const nameArray = name.trim().split('(');
-            //FIXME: better way to parse 
-            // explore tostring
-            // second occurence of export
-            const a = getPosition(content,'export ');
-            // second occurence of function
-            const b = getPosition(content,'function ');            
-            let functionCode;
-            if (a >= content.length && b >= content.length){
-                 functionCode = content;
-            } else if( a < b){
-                functionCode = content.substring(0,a);
-            }else{
-                functionCode = content.substring(0,b);
-            }
             exports.push({code:functionCode,type:'function',name:nameArray[0]});
         }
     }
@@ -133,4 +107,24 @@ export default function testFilePathGenerator(filepath:string): void{
     const dots = `../`.repeat(countOfDots);
     const importPath = `${dots}src/${pathAfterSrc}/${fileName}`;
     createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts', filepath, importPath.replace('\\',`/`));   
+}
+
+function getCode(data:string){
+    let code = '';
+    let count = 0;
+    let flag = 0;
+    for (let i=0; i < data.length; i++){
+        if(data[i] === '{' ){
+            count+=1;
+            flag = 1;
+        }
+        if (data[i] === '}') {
+            count-=1;
+        }
+        code+=data[i];
+        if ((flag === 1) && (count === 0)){
+            break;
+        }
+    }
+    return code;
 }
