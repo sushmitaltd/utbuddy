@@ -60,12 +60,33 @@ function createAndWriteToFile(newTestFilePath:string, filePath: string, importPa
         };
       });
 }
+function writeTests(logger,element:ExportedModules){
+    const tab:any = `\t\t`;
+    let testCount = findNoOfConditions(element.code);
+    let count = 1;
+    while(testCount > 0){
+    const testName = `test ${count}`;
+    logger.write(`${tab}test(\'${testName}\', () => {\n`);
+    logger.write(`${tab}});\n`);
+    testCount = testCount -1;
+    count = count + 1;
+    }
+}
+function findNoOfConditions(code:string):number{
+    let count = 1;
+    count += (code.match(/if/g) || []).length;
+    count += (code.match(/else if/g) || []).length;
+    count += (code.match(/else/g) || []).length;
+    return count;
+}
 function writeDescribeStructure(exports:ExportedModules[],logger,fileName:string){    
     logger.write(`describe(\'Testing ${fileName}\', () => {\n`);
     exports.forEach(element => {
         if(element.type === 'function'){
             const tab:any = `\t`;
-            logger.write(`${tab}describe(\'${element.name}\', () => {\n${tab}});\n`);
+            logger.write(`${tab}describe(\'${element.name}\', () => {\n`);
+            writeTests(logger,element);
+            logger.write(`${tab}});\n`);
         }
     });
     logger.write('});');
