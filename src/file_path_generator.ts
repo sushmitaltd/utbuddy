@@ -4,7 +4,7 @@ import * as path from 'path';
 
 interface ExportedModules {type:string,name:string,code:string};
 
-function createAndWriteToFile(newTestFilePath:string, filePath: string, importPath:string): void{
+function createAndWriteToFile(newTestFilePath:string, filePath: string, importPath:string, fileName:string): void{
     let data: string;
     fs.readFile(filePath, "utf8",(err, data) => {
         if (err) {console.error('Error occured', err);}
@@ -29,14 +29,15 @@ function createAndWriteToFile(newTestFilePath:string, filePath: string, importPa
                 imp += '}';
             } else if (exports.length ===1){
                 imp = exports[0].name;
-            }          
-            logger.write(`import ${imp} from \'${importPath.replace('//',`/`)}\' ;\n\n`);
-            writeDescribeStructure(exports,logger);
+            }
+            const formatted =  importPath.replace('//',`/`);
+            logger.write(`import ${imp} from \'${formatted.replace(/\\/g, "/")}\' ;\n\n`);
+            writeDescribeStructure(exports,logger,fileName);
         };
       });
 }
-function writeDescribeStructure(exports:ExportedModules[],logger){    
-    logger.write('describe(\'Testing replace file name\', () => {\n');
+function writeDescribeStructure(exports:ExportedModules[],logger,fileName:string){    
+    logger.write(`describe(\'Testing ${fileName}\', () => {\n`);
     exports.forEach(element => {
         if(element.type === 'function'){
             logger.write(`describe(\'${element.name}\', () => { \n});\n`);
@@ -116,10 +117,30 @@ export default function testFilePathGenerator(filepath:string): void{
     const countOfDots = pathAfterSrc.split('\\').length ;
     const dots = `../`.repeat(countOfDots);
     const importPath = `${dots}src/${pathAfterSrc}/${fileName}`;
-    createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts', filepath, importPath.replace('\\',`/`));   
+    createAndWriteToFile(newDirectoryPath+"\\"+ fileName+'.test.ts', filepath, importPath.replace('\\',`/`),fileName);   
 }
 
 function getCode(data:string){
+    let code = '';
+    let count = 0;
+    let flag = 0;
+    for (let i=0; i < data.length; i++){
+        if(data[i] === '{' ){
+            count+=1;
+            flag = 1;
+        }
+        if (data[i] === '}') {
+            count-=1;
+        }
+        code+=data[i];
+        if ((flag === 1) && (count === 0)){
+            break;
+        }
+    }
+    return code;
+}
+
+function identifyTests(data:string):string[]{
     let code = '';
     let count = 0;
     let flag = 0;
