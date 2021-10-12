@@ -15,7 +15,7 @@ For example if there is an image subfolder under your extension project workspac
 
 If you have any requirements or dependencies, add a section describing those and how to install and configure them.
 
-## Extensions Settings
+## Extensions Setting
 
 Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
 
