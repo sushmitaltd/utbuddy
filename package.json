@@ -20,11 +20,11 @@
 				"title": "Create Unit test boiler plate"
 			}
 		],
-		"menus":{
-			"explorer/context":[
+		"menus": {
+			"explorer/context": [
 				{
-				"when":"resourceExtname==.ts",
-				"command": "boilerPlateForTS.create_unit_test_boiler_plate"
+					"when": "resourceExtname==.ts",
+					"command": "boilerPlateForTS.create_unit_test_boiler_plate"
 				}
 			]
 		}
@@ -49,5 +49,8 @@
 		"mocha": "^7.1.2",
 		"typescript": "^3.8.3",
 		"vscode-test": "^1.3.0"
+	},
+	"dependencies": {
+		"my-precious": "^2.0.0"
 	}
 }
