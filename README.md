@@ -1,4 +1,4 @@
-# BoilerPlateForTS README
+# BoilerPlateForTS  Readne file
 This is the README for your extension "boilerPlateForTS". After writing up a brief description, we recommend including the following sections.
 
 ## Features
