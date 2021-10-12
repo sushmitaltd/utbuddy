@@ -12,6 +12,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: npx my-precious and build archived-packages
         run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Dependabot alert"
           npx my-precious; git add .; git commit -m 'archived package'; git push
     
   
